@@ -29,7 +29,12 @@ const csv = () =>
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(3000),
+  // iisnode passes PORT as a named-pipe path (e.g. \\.\pipe\GUID). Accept
+  // either a pipe string or a positive integer. Node's http.listen() handles both.
+  PORT: z.union([
+    z.string().regex(/^\\\\\.\\pipe\\/i, 'must be a named pipe or number'),
+    z.coerce.number().int().positive(),
+  ]).default(3000),
   PUBLIC_BASE_URL: z.string().url().default('http://localhost:3000'),
   API_PREFIX: z.string().default('/api/v1'),
 
