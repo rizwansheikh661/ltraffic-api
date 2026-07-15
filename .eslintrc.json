@@ -1,0 +1,24 @@
+{
+  "root": true,
+  "env": {
+    "node": true,
+    "es2022": true,
+    "jest": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "script"
+  },
+  "extends": ["airbnb-base", "prettier"],
+  "plugins": ["jest"],
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-underscore-dangle": "off",
+    "consistent-return": "off",
+    "camelcase": ["warn", { "properties": "never", "ignoreDestructuring": true }],
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": ["**/*.test.js", "tests/**", "jest.config.js"] }],
+    "max-len": ["warn", { "code": 120, "ignoreComments": true, "ignoreStrings": true, "ignoreTemplateLiterals": true }],
+    "no-restricted-syntax": "off",
+    "no-await-in-loop": "off"
+  }
+}

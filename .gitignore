@@ -1,0 +1,26 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+
+logs/
+*.log
+npm-debug.log*
+
+# Uploads live in the PHP web root (UPLOADS_ROOT) — Node never owns an uploads/ folder.
+# Dev fallback folder for local testing:
+dev-files/
+
+coverage/
+.nyc_output/
+
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+*.swp
+
+secrets/
+*.pem
+*service-account*.json
