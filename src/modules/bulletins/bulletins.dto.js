@@ -2,6 +2,12 @@
 
 const { fileUrl } = require('../../utils/url.helper');
 
+function bulletinAssetUrl(value) {
+  if (!value) return null;
+  const path = value.startsWith('bulletin/') ? value : `bulletin/${value}`;
+  return fileUrl(path);
+}
+
 function formatBulletin(row) {
   if (!row) return null;
   return {
@@ -10,9 +16,9 @@ function formatBulletin(row) {
     ref: row.ref,
     description: row.description,
     image: row.image || null,
-    image_url: row.image ? fileUrl(`bulletin/${row.image}`) : null,
+    image_url: bulletinAssetUrl(row.image),
     download: row.download || null,
-    download_url: row.download ? fileUrl(`bulletin/${row.download}`) : null,
+    download_url: bulletinAssetUrl(row.download),
     active: row.new === '1' || row.new === 1,
     status: row.new === '1' || row.new === 1 ? 'Active' : 'Inactive',
     arrival_datetime: row.arrival_datetime,
