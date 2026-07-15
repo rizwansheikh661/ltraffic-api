@@ -22,6 +22,7 @@ const { toMysqlDatetime } = require('../../utils/date.helper');
 const repo = require('./auth.repository');
 const levelsCache = require('./levels.cache');
 const { publicUser, resolveLevels, userTypeFromLevelIds } = require('./auth.dto');
+const { appRoleFor } = require('../../constants/roles');
 
 // ── token helpers ───────────────────────────────────────────
 
@@ -44,6 +45,7 @@ function signAccessToken(user) {
     roles: names,
     levelIds: ids,
     userType,
+    role: ids.length > 0 ? appRoleFor(ids[0]) : null,
     // legacy claims (retained so existing middleware and clients keep working)
     level: ids[0] || null,
     ltrafficid: user.ltrafficid || null,

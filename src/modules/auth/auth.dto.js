@@ -7,7 +7,7 @@
 
 const { unserialize } = require('../../utils/phpSerialize.helper');
 const levelsCache = require('./levels.cache');
-const { ADMIN_LEVELS } = require('../../constants/roles');
+const { ADMIN_LEVELS, appRoleFor } = require('../../constants/roles');
 
 function resolveLevels(userLevelRaw) {
   const parsed = unserialize(userLevelRaw);
@@ -42,6 +42,7 @@ function publicUser(row) {
     levelIds: ids,
     roles: names,
     userType: userTypeFromLevelIds(ids),
+    role: ids.length > 0 ? appRoleFor(ids[0]) : null,
     onboarding: row.onboarding || '0',
   };
 }

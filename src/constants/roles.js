@@ -69,14 +69,38 @@ function levelName(level) {
   return LEVEL_NAMES[Number(level)] || 'Unknown';
 }
 
+// Client-facing 3-role model for the redesigned mobile app.
+// admin   → full CRUD (see who read bulletins too)
+// manager → view-only across all data
+// user    → add own submissions, view only own data
+// Customer (level 9) → 'user' for now; mobile UI hides Timesheets.
+// Awaiting final client sign-off on the mapping — update here when confirmed.
+const APP_ROLE_BY_LEVEL = Object.freeze({
+  [LEVELS.ADMIN]: 'admin',
+  [LEVELS.ADMIN1]: 'manager',
+  [LEVELS.ADMIN2]: 'manager',
+  [LEVELS.ESSEX_SUPERVISOR]: 'manager',
+  [LEVELS.DRIVING_OPERATIVE]: 'user',
+  [LEVELS.OPERATIVE]: 'user',
+  [LEVELS.CIVILS_TFL_DRIVER]: 'user',
+  [LEVELS.CIVILS_TRAILER_DRIVER]: 'user',
+  [LEVELS.CUSTOMER]: 'user',
+});
+
+function appRoleFor(level) {
+  return APP_ROLE_BY_LEVEL[Number(level)] || null;
+}
+
 module.exports = {
   LEVELS,
   LEVEL_NAMES,
   ADMIN_LEVELS,
   EMPLOYEE_LEVELS,
   ROLE_GROUPS,
+  APP_ROLE_BY_LEVEL,
   isAdmin,
   isEmployee,
   userTypeFor,
   levelName,
+  appRoleFor,
 };
