@@ -6,18 +6,21 @@ const { authenticate } = require('../../middlewares/auth.middleware');
 const { authorize } = require('../../middlewares/rbac.middleware');
 const { validate } = require('../../middlewares/validate.middleware');
 const { LEVELS } = require('../../constants/roles');
+const { uploadFor } = require('../../middlewares/upload.middleware');
 const {
   TypeParamSchema,
   TypeIdParamSchema,
   ListQuerySchema,
   CreateSchema,
   UpdateSchema,
+  PolicyUploadParamSchema,
 } = require('./documents.validators');
 
 const router = Router();
 const canView = authorize(LEVELS.ADMIN, LEVELS.ADMIN1);
 const canWrite = authorize(LEVELS.ADMIN, LEVELS.ADMIN1);
 const canDelete = authorize(LEVELS.ADMIN);
+const policyUpload = uploadFor('downloads/policies', { allowedMime: ['application/pdf'] });
 
 /**
  * @openapi
@@ -111,9 +114,9 @@ router.get('/:type/:id',
  *             type: object
  *             required: [reference, title, version]
  *             properties:
- *               reference: { type: string, description: Document reference (used as PDF filename) }
- *               title: { type: string, description: Document title/link text }
- *               version: { type: string, description: Document issue/version }
+ *               reference: { type: string, description: Document Reference }
+ *               title: { type: string, description: Policy Title }
+ *               version: { type: string, description: Document Issue / Version }
  *     responses:
  *       201:
  *         description: Document created
@@ -198,4 +201,28 @@ router.delete('/:type/:id',
   ctrl.adminDelete,
 );
 
+
+/**
+ * @openapi
+ * /admin/documents/policies/{id}/file:
+ *   post:
+ *     tags: [Admin - Documents]
+ *     summary: Upload a policy PDF
+ *     description: Uploads the policy file directly to the legacy downloads folder. The existing document reference is used as the PDF filename.
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - { in: path, name: id, required: true, schema: { type: integer } }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [file]
+ *             properties:
+ *               file: { type: string, format: binary, description: PDF policy document }
+ *     responses:
+ *       200: { description: Policy PDF uploaded }
+ */
+router.post('/policies/:id/file', authenticate, canWrite, policyUpload.single('file'), validate({ params: PolicyUploadParamSchema }), ctrl.adminUploadPolicyFile);
 module.exports = router;

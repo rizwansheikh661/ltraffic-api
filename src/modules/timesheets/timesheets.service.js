@@ -4,6 +4,7 @@ const repo = require('./timesheets.repository');
 const { formatTimesheet, formatTimesheetSummary } = require('./timesheets.dto');
 const ApiError = require('../../common/apiError');
 const { TIMESHEET_STATUS } = require('../../constants/status');
+const notifications = require('../notifications/notifications.service');
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -105,6 +106,32 @@ async function remove(id) {
   if (!deleted) throw ApiError.notFound('Timesheet not found');
 }
 
+async function listOptions(query) {
+  return repo.findOptions(query);
+}
+
+async function createOption(fields) {
+  const existing = await repo.findOptionByTypeAndName(fields.type, fields.name);
+  if (existing) throw ApiError.conflict('A timesheet option with this name already exists');
+  const id = await repo.createOption(fields);
+  return repo.findOptionById(id);
+}
+
+async function updateOption(id, fields) {
+  const existing = await repo.findOptionById(id);
+  if (!existing) throw ApiError.notFound('Timesheet option not found');
+  if (fields.name && fields.name !== existing.name) {
+    const duplicate = await repo.findOptionByTypeAndName(existing.type, fields.name);
+    if (duplicate) throw ApiError.conflict('A timesheet option with this name already exists');
+  }
+  await repo.updateOption(id, fields);
+  return repo.findOptionById(id);
+}
+
+async function deactivateOption(id) {
+  return updateOption(id, { is_active: false });
+}
+
 module.exports = {
   submitTimesheet,
   saveDraft,
@@ -116,4 +143,8 @@ module.exports = {
   approve,
   reject,
   remove,
+  listOptions,
+  createOption,
+  updateOption,
+  deactivateOption,
 };

@@ -20,6 +20,7 @@ const {
 const { toMysqlDatetime } = require('../../utils/date.helper');
 
 const repo = require('./auth.repository');
+const bulletinRepository = require('../bulletins/bulletins.repository');
 const levelsCache = require('./levels.cache');
 const { publicUser, resolveLevels, userTypeFromLevelIds } = require('./auth.dto');
 const { appRoleFor } = require('../../constants/roles');
@@ -145,6 +146,9 @@ async function login({ identifier, password, deviceId, ip, userAgent }) {
 
   const { verified } = await verifyPasswordAndMaybeCache(user, password);
   if (!verified) throw ApiError.unauthorized('Invalid credentials', ERROR_CODES.AUTH_INVALID_CREDENTIALS);
+  if (Number(user.restricted) === 1) {
+    throw ApiError.forbidden('This user account is restricted', ERROR_CODES.AUTH_USER_DISABLED);
+  }
 
   const levelIds = resolveLevels(user.user_level);
   assertLevelsUsable(levelIds);
@@ -169,12 +173,16 @@ async function login({ identifier, password, deviceId, ip, userAgent }) {
     logger.warn(`[auth] login_timestamps write failed for user ${user.user_id}: ${err.message}`);
   }
 
+  const pendingBulletinIds = await bulletinRepository.getUnreadBulletinIds(user.user_id);
+
   return {
     accessToken,
     accessExpiresIn: env.JWT_ACCESS_EXPIRES,
     refreshToken,
     refreshExpiresAt: expiresAt.toISOString(),
     user: publicUser(user),
+    bulletinAcknowledgementRequired: pendingBulletinIds.length > 0,
+    pendingBulletinCount: pendingBulletinIds.length,
   };
 }
 
@@ -194,6 +202,9 @@ async function refresh({ refreshToken, ip, userAgent }) {
 
     const user = await repo.findUserById(row.user_id, conn);
     if (!user) throw ApiError.unauthorized('User no longer exists', ERROR_CODES.AUTH_REFRESH_INVALID);
+    if (Number(user.restricted) === 1) {
+      throw ApiError.forbidden('This user account is restricted', ERROR_CODES.AUTH_USER_DISABLED);
+    }
 
     const levelIds = resolveLevels(user.user_level);
     assertLevelsUsable(levelIds);

@@ -4,6 +4,7 @@ const repo = require('./incidents.repository');
 const { formatIncident, formatIncidentSummary, formatDocument } = require('./incidents.dto');
 const ApiError = require('../../common/apiError');
 const { INCIDENT_STATUS } = require('../../constants/status');
+const notifications = require('../notifications/notifications.service');
 
 // ── Employee ──────────────────────────────────────────────────
 
@@ -82,6 +83,9 @@ async function adminCreate(body) {
 async function updateIncident(id, fields) {
   const existing = await repo.findById(id);
   if (!existing) throw ApiError.notFound('Incident not found');
+  if (fields.status === INCIDENT_STATUS.CLOSED && !(fields.notes || existing.notes || '').trim()) {
+    throw ApiError.validation('Investigation notes are required before closing an incident');
+  }
   await repo.update(id, fields);
   const row = await repo.findById(id);
   return formatIncident(row);

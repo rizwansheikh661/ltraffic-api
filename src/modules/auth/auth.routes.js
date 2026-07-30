@@ -112,6 +112,15 @@ const router = Router();
  *               format: date-time
  *               description: 'Absolute UTC expiry of `refreshToken` (~60 days from login).'
  *               example: '2026-09-09T11:19:08.706Z'
+ *             bulletinAcknowledgementRequired:
+ *               type: boolean
+ *               description: True when active bulletins remain unread; the employee app must open Bulletins before its main dashboard.
+ *               example: true
+ *             pendingBulletinCount:
+ *               type: integer
+ *               minimum: 0
+ *               description: Number of active bulletins the user must acknowledge.
+ *               example: 2
  *             user:
  *               $ref: '#/components/schemas/AuthenticatedUser'
  *

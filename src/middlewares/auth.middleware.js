@@ -5,6 +5,7 @@ const env = require('../config/env');
 const ApiError = require('../common/apiError');
 const ERROR_CODES = require('../constants/errorCodes');
 const { userTypeFor } = require('../constants/roles');
+const authRepository = require('../modules/auth/auth.repository');
 
 function extractToken(req) {
   // SEC-02 — Bearer header ONLY. Query-string tokens leak into web-server access logs and Referer.
@@ -13,7 +14,7 @@ function extractToken(req) {
   return null;
 }
 
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   const token = extractToken(req);
   if (!token) return next(ApiError.unauthorized('Missing bearer token'));
 
@@ -41,6 +42,16 @@ function authenticate(req, res, next) {
     userType,
     name: payload.name || null,
   };
+
+  try {
+    const accessState = await authRepository.findUserAccessState(req.user.id);
+    if (!accessState) return next(ApiError.unauthorized('User account no longer exists'));
+    if (Number(accessState.restricted) === 1) {
+      return next(ApiError.forbidden('This user account is restricted', ERROR_CODES.AUTH_USER_DISABLED));
+    }
+  } catch (err) {
+    return next(err);
+  }
   return next();
 }
 

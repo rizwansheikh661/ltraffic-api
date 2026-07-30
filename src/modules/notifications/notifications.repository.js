@@ -1,0 +1,11 @@
+'use strict';
+const { pool } = require('../../config/db');
+const { LEGACY, NEW } = require('../../constants/tables');
+async function preferences(conn = pool) { const [r] = await conn.query(`SELECT event_type, notify_admin, notify_manager, updated_at FROM ${NEW.NOTIFICATION_PREFERENCES} ORDER BY event_type`); return r; }
+async function preference(eventType, conn = pool) { const [r] = await conn.query(`SELECT event_type, notify_admin, notify_manager FROM ${NEW.NOTIFICATION_PREFERENCES} WHERE event_type=:eventType LIMIT 1`, { eventType }); return r[0] || { event_type: eventType, notify_admin: 1, notify_manager: 1 }; }
+async function setPreference(eventType, fields, userId, conn = pool) { await conn.query(`INSERT INTO ${NEW.NOTIFICATION_PREFERENCES} (event_type, notify_admin, notify_manager, updated_by) VALUES (:eventType,:notifyAdmin,:notifyManager,:userId) ON DUPLICATE KEY UPDATE notify_admin=VALUES(notify_admin), notify_manager=VALUES(notify_manager), updated_by=VALUES(updated_by)`, { eventType, notifyAdmin: fields.notify_admin, notifyManager: fields.notify_manager, userId }); return preference(eventType, conn); }
+async function recipients(conn = pool) { const [r] = await conn.query(`SELECT user_id, user_level FROM ${LEGACY.LOGIN_USERS} WHERE restricted = 0`); return r; }
+async function createInbox(userId, type, title, body, data, conn = pool) { const [r] = await conn.query(`INSERT INTO ${NEW.NOTIFICATIONS} (user_id,type,title,body,data_json) VALUES (:userId,:type,:title,:body,:data)`, { userId, type, title, body, data: JSON.stringify(data) }); return r.insertId; }
+async function tokens(userId, conn = pool) { const [r] = await conn.query(`SELECT id, token FROM ${NEW.DEVICE_TOKENS} WHERE user_id=:userId AND revoked_at IS NULL`, { userId }); return r; }
+async function log(notificationId,userId,status,errorMessage=null,conn=pool){ await conn.query(`INSERT INTO ${NEW.NOTIFICATION_LOGS} (notification_id,user_id,status,error_message) VALUES (:notificationId,:userId,:status,:errorMessage)`,{notificationId,userId,status,errorMessage}); }
+module.exports={ preferences, preference, setPreference, recipients, createInbox, tokens, log };

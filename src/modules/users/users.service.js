@@ -8,6 +8,21 @@ const { formatUser, formatUserSummary } = require('./users.dto');
 const { hashBcrypt } = require('../../utils/legacyHash.helper');
 const { withTransaction } = require('../../common/db');
 const ApiError = require('../../common/apiError');
+const levelsCache = require('../auth/levels.cache');
+
+function serialiseLevel(levelId) {
+  const value = String(levelId);
+  return `a:1:{i:0;s:${value.length}:"${value}";}`;
+}
+
+function normaliseLevelInput(fields) {
+  const next = { ...fields };
+  if (next.level_id !== undefined) {
+    next.user_level = serialiseLevel(next.level_id);
+    delete next.level_id;
+  }
+  return next;
+}
 
 async function getAll(query) {
   const { rows, total } = await repo.findAll(query);
@@ -21,20 +36,21 @@ async function getById(id) {
 }
 
 async function createUser(fields) {
-  const existingUsername = await repo.findByUsername(fields.username);
+  const normalised = normaliseLevelInput(fields);
+  const existingUsername = await repo.findByUsername(normalised.username);
   if (existingUsername) throw ApiError.conflict('Username already exists');
 
-  if (fields.email) {
-    const existingEmail = await repo.findByEmail(fields.email);
+  if (normalised.email) {
+    const existingEmail = await repo.findByEmail(normalised.email);
     if (existingEmail) throw ApiError.conflict('Email already exists');
   }
 
-  const plainPassword = fields.password;
+  const plainPassword = normalised.password;
   const md5Hash = md5(String(plainPassword));
   const bcryptHash = await hashBcrypt(plainPassword);
 
   const userId = await withTransaction(async (conn) => {
-    const id = await repo.create({ ...fields, password: md5Hash }, conn);
+    const id = await repo.create({ ...normalised, password: md5Hash }, conn);
     await authRepo.upsertCredentials(id, bcryptHash, md5Hash, conn);
     return id;
   });
@@ -47,7 +63,12 @@ async function updateUser(id, fields) {
   const existing = await repo.findById(id);
   if (!existing) throw ApiError.notFound('User not found');
 
-  const { password, ...otherFields } = fields;
+  const { password, ...otherFieldsRaw } = normaliseLevelInput(fields);
+  const otherFields = otherFieldsRaw;
+  if (otherFields.username && otherFields.username !== existing.username) {
+    const duplicate = await repo.findByUsername(otherFields.username);
+    if (duplicate) throw ApiError.conflict('Username already exists');
+  }
 
   if (password) {
     const md5Hash = md5(String(password));
@@ -63,10 +84,17 @@ async function updateUser(id, fields) {
     });
   } else if (Object.keys(otherFields).length) {
     await repo.update(id, otherFields);
+    if (Number(otherFields.restricted) === 1) {
+      await authRepo.revokeAllRefreshTokensForUser(id);
+    }
   }
 
   const row = await repo.findById(id);
   return formatUser(row);
+}
+
+function getLevels() {
+  return levelsCache.list();
 }
 
 async function removeUser(id) {
@@ -86,4 +114,5 @@ module.exports = {
   createUser,
   updateUser,
   removeUser,
+  getLevels,
 };

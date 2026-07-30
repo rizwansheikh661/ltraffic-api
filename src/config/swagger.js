@@ -91,6 +91,15 @@ const definition = {
       ].join('\n'),
     },
 
+    {
+      name: 'My Account',
+      description: 'Admin-managed About Us, Privacy Policy and Terms & Conditions pages.',
+    },
+    {
+      name: 'Admin - Contacts',
+      description: 'Admin management for the company contact directory stored in the legacy hr table.',
+    },
+
     // ── Employee App ───────────────────────────────────────────
     {
       name: 'Bulletins',
@@ -127,7 +136,7 @@ const definition = {
     {
       name: 'Contacts',
       description: [
-        'Read-only company contact directory. Employees can browse and search colleagues by name to find phone numbers, email addresses, and job titles.',
+        'Company contact directory. Employees can browse and search colleagues by name; Admin and Admin1 can add and edit contacts, while full Admin can remove them.',
         '',
         '## Database',
         '',
@@ -143,7 +152,9 @@ const definition = {
         '',
         '| Role | Access |',
         '|------|--------|',
-        '| All authenticated users | Read-only (list + detail) |',
+        '| All authenticated users | Read-only directory (list + detail) |',
+        '| Admin, Admin1 | Add and edit contacts |',
+        '| Admin | Remove contacts |',
         '',
         '## PHP Compatibility',
         '',
@@ -170,7 +181,9 @@ const definition = {
         '',
         '| Role | Access |',
         '|------|--------|',
-        '| All authenticated users | Read-only (list + detail) |',
+        '| All authenticated users | Read-only directory (list + detail) |',
+        '| Admin, Admin1 | Add and edit contacts |',
+        '| Admin | Remove contacts |',
         '',
         '## PHP Compatibility',
         '',
@@ -1615,7 +1628,7 @@ const definition = {
     },
     {
       name: 'Common APIs',
-      tags: ['Devices', 'Bulletins', 'Contacts', 'Documents', 'Onboarding'],
+      tags: ['Devices', 'Bulletins', 'Contacts', 'Documents', 'Onboarding', 'My Account'],
     },
     {
       name: 'Employee APIs',
@@ -1643,6 +1656,7 @@ const definition = {
         'Admin - Vehicle Checks',
         'Admin - Timesheets',
         'Admin - Incidents',
+        'Admin - Contacts',
         'Admin - HR',
         'Admin - Users',
         'Admin - Equipment Register',

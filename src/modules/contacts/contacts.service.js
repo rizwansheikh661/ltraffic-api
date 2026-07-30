@@ -15,7 +15,43 @@ async function getById(id) {
   return formatContact(row);
 }
 
+async function create(fields) {
+  const existing = await repo.findByEmployeeId(fields.employeeid);
+  if (existing) throw ApiError.conflict('Employee ID already exists in the contact directory');
+
+  const id = await repo.create({
+    ...fields,
+    phone: fields.phone || '',
+    email: fields.email || '',
+    jobtitle: fields.jobtitle || null,
+    linemanager: fields.linemanager || null,
+    location: fields.location || null,
+  });
+  return formatContact(await repo.findById(id));
+}
+
+async function update(id, fields) {
+  const existing = await repo.findById(id);
+  if (!existing) throw ApiError.notFound('Contact not found');
+
+  if (fields.employeeid && fields.employeeid !== existing.employeeid) {
+    const duplicate = await repo.findByEmployeeId(fields.employeeid);
+    if (duplicate) throw ApiError.conflict('Employee ID already exists in the contact directory');
+  }
+
+  await repo.update(id, fields);
+  return formatContact(await repo.findById(id));
+}
+
+async function remove(id) {
+  const deleted = await repo.remove(id);
+  if (!deleted) throw ApiError.notFound('Contact not found');
+}
+
 module.exports = {
   getAll,
   getById,
+  create,
+  update,
+  remove,
 };

@@ -48,6 +48,14 @@ async function findUserById(userId, conn = pool) {
   return rows[0] || null;
 }
 
+async function findUserAccessState(userId, conn = pool) {
+  const [rows] = await conn.query(
+    `SELECT user_id, restricted FROM ${LEGACY.LOGIN_USERS} WHERE user_id = :id LIMIT 1`,
+    { id: userId },
+  );
+  return rows[0] || null;
+}
+
 async function updateUserPasswordMd5(userId, md5Hash, conn = pool) {
   await conn.query(
     `UPDATE ${LEGACY.LOGIN_USERS} SET password = :hash WHERE user_id = :id`,
@@ -173,6 +181,7 @@ module.exports = {
   findUserByUsernameOrEmail,
   findUserByEmail,
   findUserById,
+  findUserAccessState,
   updateUserPasswordMd5,
   clearTwoFactorState,
   recordLogin,

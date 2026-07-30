@@ -82,7 +82,15 @@ const AdminUpdateSchema = z.object({
 
 const StatusUpdateSchema = z.object({
   status: z.enum(['Open', 'Closed']),
-  notes: z.string().optional(),
+  notes: z.string().trim().optional(),
+}).superRefine(({ status, notes }, ctx) => {
+  if (status === 'Closed' && !notes) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['notes'],
+      message: 'Investigation notes are required before closing an incident',
+    });
+  }
 });
 
 const IdParamSchema = z.object({

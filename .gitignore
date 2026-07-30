@@ -24,3 +24,7 @@ Thumbs.db
 secrets/
 *.pem
 *service-account*.json
+
+# Local test/debug artifacts — never commit
+login_*.json
+.test_*

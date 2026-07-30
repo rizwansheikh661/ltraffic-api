@@ -5,6 +5,7 @@ const ApiError = require('../../common/apiError');
 const { ok, created, noContent } = require('../../common/response');
 const pagination = require('../../common/pagination');
 const service = require('./incidents.service');
+const notifications = require('../notifications/notifications.service');
 const { relativePath } = require('../../middlewares/upload.middleware');
 const { buildImagePath } = require('../../utils/file.helper');
 

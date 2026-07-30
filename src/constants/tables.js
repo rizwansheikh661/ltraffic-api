@@ -72,7 +72,10 @@ const NEW = Object.freeze({
   DEVICE_TOKENS: 'lt_device_tokens',
   NOTIFICATIONS: 'lt_notifications',
   NOTIFICATION_LOGS: 'lt_notification_logs',
+  NOTIFICATION_PREFERENCES: 'lt_notification_preferences',
   AUDIT_LOGS: 'lt_audit_logs',
+  CONTENT_PAGES: 'lt_content_pages',
+  TIMESHEET_OPTIONS: 'lt_timesheet_options',
 });
 
 module.exports = { LEGACY, NEW };

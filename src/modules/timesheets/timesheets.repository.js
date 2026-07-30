@@ -1,7 +1,7 @@
 'use strict';
 
 const { pool } = require('../../config/db');
-const { LEGACY } = require('../../constants/tables');
+const { LEGACY, NEW } = require('../../constants/tables');
 
 // ── Employee queries ───────────────────────────────────────────
 
@@ -110,6 +110,67 @@ async function remove(id, conn = pool) {
   return result.affectedRows > 0;
 }
 
+async function findOptions({ type, includeInactive = false } = {}, conn = pool) {
+  const conditions = [];
+  const params = {};
+  if (type) {
+    conditions.push('type = :type');
+    params.type = type;
+  }
+  if (!includeInactive) conditions.push('is_active = 1');
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+  const [rows] = await conn.query(
+    `SELECT id, type, name, is_active, sort_order, created_at, updated_at
+       FROM ${NEW.TIMESHEET_OPTIONS} ${where}
+      ORDER BY type ASC, sort_order ASC, name ASC`,
+    params,
+  );
+  return rows;
+}
+
+async function findOptionById(id, conn = pool) {
+  const [rows] = await conn.query(
+    `SELECT id, type, name, is_active, sort_order, created_at, updated_at
+       FROM ${NEW.TIMESHEET_OPTIONS} WHERE id = :id LIMIT 1`,
+    { id },
+  );
+  return rows[0] || null;
+}
+
+async function findOptionByTypeAndName(type, name, conn = pool) {
+  const [rows] = await conn.query(
+    `SELECT id FROM ${NEW.TIMESHEET_OPTIONS} WHERE type = :type AND name = :name LIMIT 1`,
+    { type, name },
+  );
+  return rows[0] || null;
+}
+
+async function createOption(fields, conn = pool) {
+  const [result] = await conn.query(
+    `INSERT INTO ${NEW.TIMESHEET_OPTIONS} (type, name, sort_order)
+     VALUES (:type, :name, :sort_order)`,
+    fields,
+  );
+  return result.insertId;
+}
+
+async function updateOption(id, fields, conn = pool) {
+  const allowed = ['name', 'is_active', 'sort_order'];
+  const sets = [];
+  const params = { id };
+  for (const key of allowed) {
+    if (fields[key] !== undefined) {
+      sets.push(`${key} = :${key}`);
+      params[key] = fields[key];
+    }
+  }
+  const [result] = await conn.query(
+    `UPDATE ${NEW.TIMESHEET_OPTIONS} SET ${sets.join(', ')} WHERE id = :id`,
+    params,
+  );
+  return result.affectedRows > 0;
+}
+
 module.exports = {
   create,
   findByUser,
@@ -117,4 +178,9 @@ module.exports = {
   findById,
   updateStatus,
   remove,
+  findOptions,
+  findOptionById,
+  findOptionByTypeAndName,
+  createOption,
+  updateOption,
 };

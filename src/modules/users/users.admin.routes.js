@@ -49,6 +49,12 @@ router.get('/',
   ctrl.list,
 );
 
+router.get('/levels',
+  authenticate,
+  canView,
+  ctrl.levels,
+);
+
 /**
  * @openapi
  * /admin/users/{id}:
@@ -225,4 +231,15 @@ router.delete('/:id',
   ctrl.remove,
 );
 
+/**
+ * @openapi
+ * /admin/users/levels:
+ *   get:
+ *     tags: [Admin - Users]
+ *     summary: List available user levels
+ *     description: Returns the friendly numeric level ID, name and disabled state for the user-management form.
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200: { description: Available user levels }
+ */
 module.exports = router;

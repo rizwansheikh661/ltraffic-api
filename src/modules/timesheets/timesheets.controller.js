@@ -4,6 +4,7 @@ const asyncHandler = require('../../common/asyncHandler');
 const { ok, created, noContent } = require('../../common/response');
 const pagination = require('../../common/pagination');
 const service = require('./timesheets.service');
+const notifications = require('../notifications/notifications.service');
 
 // ── Employee ──────────────────────────────────────────────────
 
@@ -63,6 +64,31 @@ const adminDelete = asyncHandler(async (req, res) => {
   return noContent(res);
 });
 
+const listOptions = asyncHandler(async (req, res) => {
+  const data = await service.listOptions(req.query);
+  return ok(res, data);
+});
+
+const employeeListOptions = asyncHandler(async (req, res) => {
+  const data = await service.listOptions({ ...req.query, includeInactive: false });
+  return ok(res, data);
+});
+
+const createOption = asyncHandler(async (req, res) => {
+  const data = await service.createOption(req.body);
+  return created(res, data);
+});
+
+const updateOption = asyncHandler(async (req, res) => {
+  const data = await service.updateOption(req.params.optionId, req.body);
+  return ok(res, data);
+});
+
+const deactivateOption = asyncHandler(async (req, res) => {
+  await service.deactivateOption(req.params.optionId);
+  return noContent(res);
+});
+
 module.exports = {
   employeeSubmit,
   employeeDraft,
@@ -74,4 +100,9 @@ module.exports = {
   adminApprove,
   adminReject,
   adminDelete,
+  listOptions,
+  employeeListOptions,
+  createOption,
+  updateOption,
+  deactivateOption,
 };

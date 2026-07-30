@@ -81,7 +81,7 @@ const router = Router();
  *     summary: List employee contact directory
  *     security:
  *       - bearerAuth: []
- *     description: Returns paginated employee directory. Search by first name or surname (prefix match). Sorted by `employeeid ASC`.
+ *     description: Returns the legacy-compatible paginated employee directory. Use `firstname` and/or `surname` for exact PHP-style prefix filters; `search` searches either field. Sorted by `employeeid ASC`.
  *     parameters:
  *       - in: query
  *         name: page
@@ -97,9 +97,21 @@ const router = Router();
  *           type: integer
  *           minimum: 1
  *           maximum: 100
- *           default: 20
- *         description: 'Items per page. Max 100.'
- *         example: 20
+ *           default: 10
+ *         description: 'Items per page. Defaults to the legacy PHP page size; max 100.'
+ *         example: 10
+ *       - in: query
+ *         name: firstname
+ *         schema:
+ *           type: string
+ *         description: 'Legacy PHP first-name prefix filter.'
+ *         example: 'Dean'
+ *       - in: query
+ *         name: surname
+ *         schema:
+ *           type: string
+ *         description: 'Legacy PHP surname prefix filter. Combines with firstname using AND.'
+ *         example: 'Cairns'
  *       - in: query
  *         name: search
  *         schema:

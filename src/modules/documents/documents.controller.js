@@ -1,5 +1,10 @@
 'use strict';
 
+const fs = require('fs/promises');
+const path = require('path');
+const env = require('../../config/env');
+const ApiError = require('../../common/apiError');
+const { fileUrl } = require('../../utils/url.helper');
 const asyncHandler = require('../../common/asyncHandler');
 const { ok, created, noContent } = require('../../common/response');
 const pagination = require('../../common/pagination');
@@ -31,6 +36,15 @@ const adminUpdate = asyncHandler(async (req, res) => {
   return ok(res, data);
 });
 
+
+const adminUploadPolicyFile = asyncHandler(async (req, res) => {
+  if (!req.file) throw ApiError.badRequest('Policy PDF file is required');
+  const document = await service.getById('policies', req.params.id);
+  const safeReference = String(document.reference).replace(/[^a-zA-Z0-9._-]/g, '_');
+  const target = path.resolve(process.cwd(), env.UPLOADS_ROOT, 'downloads', 'policies', `${safeReference}.pdf`);
+  await fs.rename(req.file.path, target);
+  return ok(res, { ...document, download_url: fileUrl(`downloads/policies/${safeReference}.pdf`) });
+});
 const adminDelete = asyncHandler(async (req, res) => {
   const { type, id } = req.params;
   await service.remove(type, id);
@@ -43,4 +57,5 @@ module.exports = {
   adminCreate,
   adminUpdate,
   adminDelete,
+  adminUploadPolicyFile,
 };

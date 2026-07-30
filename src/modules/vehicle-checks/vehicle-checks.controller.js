@@ -5,6 +5,7 @@ const ApiError = require('../../common/apiError');
 const { ok, created, noContent } = require('../../common/response');
 const pagination = require('../../common/pagination');
 const service = require('./vehicle-checks.service');
+const notifications = require('../notifications/notifications.service');
 const { relativePath } = require('../../middlewares/upload.middleware');
 
 const UPLOAD_SUBPATH = 'vehicleupload';
@@ -12,7 +13,7 @@ const UPLOAD_SUBPATH = 'vehicleupload';
 // ── Employee ──────────────────────────────────────────────────
 
 const employeeCreate = asyncHandler(async (req, res) => {
-  const data = await service.createCheck(req.user.name, req.body);
+  const data = await service.createCheck(req.user, req.body);
   return created(res, data);
 });
 

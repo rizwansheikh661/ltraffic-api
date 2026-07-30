@@ -35,7 +35,8 @@ const TEAMS = [
 ];
 
 const CreateSchema = z.object({
-  user_level: z.enum(USER_LEVELS),
+  user_level: z.enum(USER_LEVELS).optional(),
+  level_id: z.coerce.number().int().min(1).max(9).optional(),
   restricted: z.coerce.number().int().min(0).max(1).default(0),
   username: z.string().min(1, 'Username is required'),
   name: z.string().min(1, 'Employee name is required'),
@@ -47,11 +48,17 @@ const CreateSchema = z.object({
   team: z.enum(TEAMS).optional(),
   name1: z.string().optional(),
   onboarding: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (!data.user_level && !data.level_id) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['level_id'], message: 'A user level is required' });
+  }
 });
 
 const UpdateSchema = z.object({
   user_level: z.enum(USER_LEVELS).optional(),
+  level_id: z.coerce.number().int().min(1).max(9).optional(),
   restricted: z.coerce.number().int().min(0).max(1).optional(),
+  username: z.string().min(1).optional(),
   name: z.string().min(1).optional(),
   email: z.string().email().optional().or(z.literal('')),
   password: z.string().min(8, 'Password must be at least 8 characters').optional(),

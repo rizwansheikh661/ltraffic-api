@@ -1,6 +1,8 @@
 'use strict';
 
 const { Router } = require('express');
+const { authenticate } = require('../middlewares/auth.middleware');
+const { requireBulletinAcknowledgement } = require('../middlewares/bulletinGate.middleware');
 
 const healthRoutes = require('../modules/health/health.routes');
 const authRoutes = require('../modules/auth/auth.routes');
@@ -14,6 +16,7 @@ const timesheetEmployeeRoutes = require('../modules/timesheets/timesheets.employ
 const incidentAdminRoutes = require('../modules/incidents/incidents.admin.routes');
 const incidentEmployeeRoutes = require('../modules/incidents/incidents.employee.routes');
 const contactEmployeeRoutes = require('../modules/contacts/contacts.employee.routes');
+const contactAdminRoutes = require('../modules/contacts/contacts.admin.routes');
 const documentAdminRoutes = require('../modules/documents/documents.admin.routes');
 const documentEmployeeRoutes = require('../modules/documents/documents.employee.routes');
 const hrAdminRoutes = require('../modules/hr/hr.admin.routes');
@@ -42,12 +45,19 @@ const civAdminRoutes = require('../modules/civils/civ.admin.routes');
 const civEmployeeRoutes = require('../modules/civils/civ.employee.routes');
 const tflAdminRoutes = require('../modules/tfl/tfl.admin.routes');
 const tflEmployeeRoutes = require('../modules/tfl/tfl.employee.routes');
+const contentPagesRoutes = require('../modules/content-pages/content-pages.routes');
+const notificationAdminRoutes = require('../modules/notifications/notifications.admin.routes');
 
 const router = Router();
 
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/devices', deviceRoutes);
+router.use('/account/pages', contentPagesRoutes);
+
+// This must precede all employee business modules. Employees can only use the
+// bulletin endpoints until every active bulletin has been acknowledged.
+router.use('/employee', authenticate, requireBulletinAcknowledgement);
 
 // Business modules — /admin/* and /employee/* top-level split
 router.use('/admin/bulletins', bulletinAdminRoutes);
@@ -59,10 +69,12 @@ router.use('/employee/timesheets', timesheetEmployeeRoutes);
 router.use('/admin/incidents', incidentAdminRoutes);
 router.use('/employee/incidents', incidentEmployeeRoutes);
 router.use('/employee/contacts', contactEmployeeRoutes);
+router.use('/admin/contacts', contactAdminRoutes);
 router.use('/admin/documents', documentAdminRoutes);
 router.use('/employee/documents', documentEmployeeRoutes);
 router.use('/admin/hr', hrAdminRoutes);
 router.use('/admin/users', usersAdminRoutes);
+router.use('/admin/notifications', notificationAdminRoutes);
 router.use('/admin/equipment-register', erAdminRoutes);
 router.use('/admin/vehicle-register', vrAdminRoutes);
 router.use('/admin/plant-register', prAdminRoutes);

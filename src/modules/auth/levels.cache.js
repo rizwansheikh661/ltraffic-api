@@ -68,4 +68,8 @@ function status() {
   return { size: byId.size, loadedAt };
 }
 
-module.exports = { load, refresh: load, getById, getByName, idsToNames, namesToIds, status };
+function list() {
+  return [...byId.values()].map((entry) => ({ ...entry }));
+}
+
+module.exports = { load, refresh: load, getById, getByName, idsToNames, namesToIds, status, list };

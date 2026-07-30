@@ -19,6 +19,7 @@
     "import/no-extraneous-dependencies": ["error", { "devDependencies": ["**/*.test.js", "tests/**", "jest.config.js"] }],
     "max-len": ["warn", { "code": 120, "ignoreComments": true, "ignoreStrings": true, "ignoreTemplateLiterals": true }],
     "no-restricted-syntax": "off",
-    "no-await-in-loop": "off"
+    "no-await-in-loop": "off",
+    "strict": ["error", "global"]
   }
 }

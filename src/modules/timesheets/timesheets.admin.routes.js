@@ -10,12 +10,41 @@ const {
   ListQuerySchema,
   AdminCreateSchema,
   IdParamSchema,
+  OptionListQuerySchema,
+  OptionIdParamSchema,
+  CreateOptionSchema,
+  UpdateOptionSchema,
 } = require('./timesheets.validators');
 
 const router = Router();
 const canView = authorize(LEVELS.ADMIN, LEVELS.ADMIN1);
 const canEdit = authorize(LEVELS.ADMIN, LEVELS.ADMIN1);
 const canDelete = authorize(LEVELS.ADMIN);
+
+router.get('/options',
+  authenticate,
+  canView,
+  validate({ query: OptionListQuerySchema }),
+  ctrl.listOptions,
+);
+router.post('/options',
+  authenticate,
+  canEdit,
+  validate({ body: CreateOptionSchema }),
+  ctrl.createOption,
+);
+router.put('/options/:optionId',
+  authenticate,
+  canEdit,
+  validate({ params: OptionIdParamSchema, body: UpdateOptionSchema }),
+  ctrl.updateOption,
+);
+router.delete('/options/:optionId',
+  authenticate,
+  canEdit,
+  validate({ params: OptionIdParamSchema }),
+  ctrl.deactivateOption,
+);
 
 /**
  * @openapi
@@ -243,4 +272,65 @@ router.delete('/:id',
   ctrl.adminDelete,
 );
 
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     TimesheetOption:
+ *       type: object
+ *       properties:
+ *         id: { type: integer }
+ *         type: { type: string, enum: [activity, contract] }
+ *         name: { type: string }
+ *         is_active: { type: boolean }
+ *         sort_order: { type: integer }
+ * /admin/timesheets/options:
+ *   get:
+ *     tags: [Admin - Timesheets]
+ *     summary: List Activity and Contract options
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200: { description: Timesheet options }
+ *   post:
+ *     tags: [Admin - Timesheets]
+ *     summary: Add an Activity or Contract option
+ *     security: [{ bearerAuth: [] }]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [type, name]
+ *             properties:
+ *               type: { type: string, enum: [activity, contract] }
+ *               name: { type: string }
+ *               sort_order: { type: integer, default: 0 }
+ *     responses:
+ *       201: { description: Option created }
+ * /admin/timesheets/options/{optionId}:
+ *   put:
+ *     tags: [Admin - Timesheets]
+ *     summary: Rename, reorder, activate or deactivate a timesheet option
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: optionId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: Option updated }
+ *   delete:
+ *     tags: [Admin - Timesheets]
+ *     summary: Deactivate a timesheet option
+ *     description: Historic timesheets are unchanged; this is a soft delete.
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: path
+ *         name: optionId
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       204: { description: Option deactivated }
+ */
 module.exports = router;

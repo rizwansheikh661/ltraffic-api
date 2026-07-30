@@ -4,12 +4,14 @@ const repo = require('./vehicle-checks.repository');
 const { formatVehicleCheck, formatVehicleCheckSummary, formatDocument } = require('./vehicle-checks.dto');
 const ApiError = require('../../common/apiError');
 const { toMysqlDatetime } = require('../../utils/date.helper');
+const notifications = require('../notifications/notifications.service');
 
 const THROTTLE_HOURS = 8;
 
 // ── Employee ──────────────────────────────────────────────────
 
-async function createCheck(drivername, body) {
+async function createCheck(user, body) {
+  const drivername = user.name;
   const lastTime = await repo.getLastSubmissionTime(drivername);
   if (lastTime) {
     const last = new Date(lastTime);

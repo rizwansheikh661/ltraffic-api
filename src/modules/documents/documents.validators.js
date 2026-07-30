@@ -25,6 +25,8 @@ const CreateSchema = z.object({
   version: z.string().min(1, 'Version is required'),
 });
 
+const PolicyUploadParamSchema = z.object({ id: z.coerce.number().int().positive() });
+
 const UpdateSchema = z.object({
   reference: z.string().min(1).optional(),
   title: z.string().min(1).optional(),
@@ -38,4 +40,5 @@ module.exports = {
   ListQuerySchema,
   CreateSchema,
   UpdateSchema,
+  PolicyUploadParamSchema,
 };

@@ -10,12 +10,22 @@ const {
   EmployeeListQuerySchema,
   CreateSchema,
   IdParamSchema,
+  OptionListQuerySchema,
 } = require('./timesheets.validators');
 
 const router = Router();
 const canAccess = authorize(
   LEVELS.ADMIN, LEVELS.DRIVING_OPERATIVE, LEVELS.OPERATIVE, LEVELS.ADMIN1,
   LEVELS.CIVILS_TFL_DRIVER, LEVELS.CIVILS_TRAILER_DRIVER, LEVELS.ESSEX_SUPERVISOR,
+);
+
+// The app calls this before rendering a timesheet form. It exposes only active
+// admin-managed Activities and Contracts, while historic sheets retain text.
+router.get('/options',
+  authenticate,
+  canAccess,
+  validate({ query: OptionListQuerySchema }),
+  ctrl.employeeListOptions,
 );
 
 /**
@@ -159,4 +169,19 @@ router.get('/:id',
   ctrl.employeeGetById,
 );
 
+/**
+ * @openapi
+ * /employee/timesheets/options:
+ *   get:
+ *     tags: [Timesheets]
+ *     summary: List active Activity and Contract options for the timesheet form
+ *     security: [{ bearerAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema: { type: string, enum: [activity, contract] }
+ *     responses:
+ *       200: { description: Active options only }
+ *       403: { description: BULLETIN_ACKNOWLEDGEMENT_REQUIRED when active unread bulletins remain }
+ */
 module.exports = router;

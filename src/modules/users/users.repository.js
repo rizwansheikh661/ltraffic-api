@@ -77,7 +77,7 @@ async function create(fields, conn = pool) {
 
 async function update(id, fields, conn = pool) {
   const allowed = [
-    'user_level', 'restricted', 'name', 'email',
+    'user_level', 'restricted', 'username', 'name', 'email',
     'teamup', 'vehiclereg', 'ltrafficid', 'team', 'name1', 'onboarding',
   ];
   const sets = [];
