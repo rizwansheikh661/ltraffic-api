@@ -34,7 +34,7 @@ router.get('/options',
  *   post:
  *     tags: [Timesheets]
  *     summary: Submit a weekly timesheet
- *     description: Creates a new timesheet with status "Submitted". Uses the authenticated user's name and ltrafficid.
+ *     description: Creates a timesheet with status "Submitted". If this employee already has a Draft or Submitted (pending) sheet for the same week, that record is updated instead. Approved sheets are never overwritten.
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -63,7 +63,9 @@ router.get('/options',
  *               comments: { type: string }
  *     responses:
  *       201:
- *         description: Timesheet submitted
+ *         description: Timesheet created
+ *       200:
+ *         description: Existing pending timesheet updated
  */
 router.post('/submit',
   authenticate,

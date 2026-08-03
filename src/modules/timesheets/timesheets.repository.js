@@ -54,6 +54,43 @@ async function findByUser(ltrafficid, { limit, offset, status } = {}, conn = poo
   return { rows, total: countRows[0].total };
 }
 
+// A Submitted sheet is the legacy database equivalent of a pending sheet.
+// Drafts are included so an older draft can be converted into a submission
+// without creating another record for the same week.
+async function findLatestEditableByUserAndWeek(ltrafficid, week, conn = pool) {
+  const [rows] = await conn.query(
+    `SELECT * FROM ${LEGACY.TIMESHEET}
+      WHERE ltrafficid = :ltrafficid
+        AND week = :week
+        AND status IN ('Draft', 'Submitted')
+      ORDER BY id DESC
+      LIMIT 1`,
+    { ltrafficid, week },
+  );
+  return rows[0] || null;
+}
+
+async function updateSubmission(id, data, conn = pool) {
+  const [result] = await conn.query(
+    `UPDATE ${LEGACY.TIMESHEET}
+        SET week = :week,
+            ltrafficid = :ltrafficid,
+            name = :name,
+            date1 = :date1, hours1 = :hours1, location1 = :location1, activity1 = :activity1, contract1 = :contract1,
+            date2 = :date2, hours2 = :hours2, location2 = :location2, activity2 = :activity2, contract2 = :contract2,
+            date3 = :date3, hours3 = :hours3, location3 = :location3, activity3 = :activity3, contract3 = :contract3,
+            date4 = :date4, hours4 = :hours4, location4 = :location4, activity4 = :activity4, contract4 = :contract4,
+            date5 = :date5, hours5 = :hours5, location5 = :location5, activity5 = :activity5, contract5 = :contract5,
+            date6 = :date6, hours6 = :hours6, location6 = :location6, activity6 = :activity6, contract6 = :contract6,
+            date7 = :date7, hours7 = :hours7, location7 = :location7, activity7 = :activity7, contract7 = :contract7,
+            comments = :comments,
+            status = :status
+      WHERE id = :id`,
+    { ...data, id },
+  );
+  return result.affectedRows > 0;
+}
+
 // ── Admin queries ──────────────────────────────────────────────
 
 async function findAll({ search, status, limit, offset } = {}, conn = pool) {
@@ -174,6 +211,8 @@ async function updateOption(id, fields, conn = pool) {
 module.exports = {
   create,
   findByUser,
+  findLatestEditableByUserAndWeek,
+  updateSubmission,
   findAll,
   findById,
   updateStatus,

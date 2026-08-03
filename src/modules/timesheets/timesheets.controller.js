@@ -4,18 +4,17 @@ const asyncHandler = require('../../common/asyncHandler');
 const { ok, created, noContent } = require('../../common/response');
 const pagination = require('../../common/pagination');
 const service = require('./timesheets.service');
-const notifications = require('../notifications/notifications.service');
 
 // ── Employee ──────────────────────────────────────────────────
 
 const employeeSubmit = asyncHandler(async (req, res) => {
   const data = await service.submitTimesheet(req.user, req.body);
-  return created(res, data);
+  return data.submission_action === 'updated' ? ok(res, data) : created(res, data);
 });
 
 const employeeDraft = asyncHandler(async (req, res) => {
   const data = await service.saveDraft(req.user, req.body);
-  return created(res, data);
+  return data.submission_action === 'updated' ? ok(res, data) : created(res, data);
 });
 
 const employeeList = asyncHandler(async (req, res) => {

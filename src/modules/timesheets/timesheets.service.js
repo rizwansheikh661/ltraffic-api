@@ -4,7 +4,6 @@ const repo = require('./timesheets.repository');
 const { formatTimesheet, formatTimesheetSummary } = require('./timesheets.dto');
 const ApiError = require('../../common/apiError');
 const { TIMESHEET_STATUS } = require('../../constants/status');
-const notifications = require('../notifications/notifications.service');
 
 // ── Helpers ───────────────────────────────────────────────────
 
@@ -40,16 +39,29 @@ function flattenForDbAdmin(body) {
 
 async function submitTimesheet(user, body) {
   const data = flattenForDb(body, user, TIMESHEET_STATUS.SUBMITTED);
-  const id = await repo.create(data);
+  const existing = await repo.findLatestEditableByUserAndWeek(user.ltrafficid, body.week);
+  const id = existing ? existing.id : await repo.create(data);
+  if (existing) await repo.updateSubmission(id, data);
   const row = await repo.findById(id);
-  return formatTimesheet(row);
+  return {
+    ...formatTimesheet(row),
+    submission_action: existing ? 'updated' : 'created',
+  };
 }
 
 async function saveDraft(user, body) {
   const data = flattenForDb(body, user, TIMESHEET_STATUS.DRAFT);
-  const id = await repo.create(data);
+  const existing = await repo.findLatestEditableByUserAndWeek(user.ltrafficid, body.week);
+  // Do not turn an already-submitted pending sheet back into a draft if an
+  // older mobile client still calls this endpoint.
+  const draft = existing?.status === TIMESHEET_STATUS.DRAFT ? existing : null;
+  const id = draft ? draft.id : await repo.create(data);
+  if (draft) await repo.updateSubmission(id, data);
   const row = await repo.findById(id);
-  return formatTimesheet(row);
+  return {
+    ...formatTimesheet(row),
+    submission_action: draft ? 'updated' : 'created',
+  };
 }
 
 async function getMyTimesheets(ltrafficid, query) {

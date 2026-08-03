@@ -21,15 +21,24 @@ const adminUsername = `feedback_admin_${suffix}`;
 const admin1Username = `feedback_admin1_${suffix}`;
 const contactEmployeeId = `FB${suffix}`;
 const policyReference = `FB-POL-${suffix}`;
+const timesheetLtrafficId = `FB-TS-${suffix}`;
+const timesheetWeek = 'Week commencing 2026-08-03';
 let adminId;
 let admin1Id;
 let policyId;
 
-async function createUser(username, level) {
+async function createUser(username, level, ltrafficid = '') {
   const [result] = await db.pool.query(
-    `INSERT INTO login_users (user_level, restricted, username, name, email, password)
-     VALUES (:level, 0, :username, :name, :email, :password)`,
-    { level, username, name: username, email: `${username}@ltraffic.test`, password: md5(password) },
+    `INSERT INTO login_users (user_level, restricted, username, name, email, password, ltrafficid)
+     VALUES (:level, 0, :username, :name, :email, :password, :ltrafficid)`,
+    {
+      level,
+      username,
+      name: username,
+      email: `${username}@ltraffic.test`,
+      password: md5(password),
+      ltrafficid,
+    },
   );
   return result.insertId;
 }
@@ -46,7 +55,7 @@ describe('Mobile feedback API fixes', () => {
 
   beforeAll(async () => {
     await levelsCache.load();
-    adminId = await createUser(adminUsername, 'a:1:{i:0;s:1:"1";}');
+    adminId = await createUser(adminUsername, 'a:1:{i:0;s:1:"1";}', timesheetLtrafficId);
     admin1Id = await createUser(admin1Username, 'a:1:{i:0;s:1:"4";}');
     adminToken = await tokenFor(adminUsername);
     admin1Token = await tokenFor(admin1Username);
@@ -55,6 +64,7 @@ describe('Mobile feedback API fixes', () => {
   afterAll(async () => {
     if (policyId) await db.pool.query('DELETE FROM policies WHERE id = :id', { id: policyId });
     await db.pool.query('DELETE FROM hr WHERE employeeid = :employeeid', { employeeid: contactEmployeeId });
+    await db.pool.query('DELETE FROM timesheet WHERE ltrafficid = :ltrafficid AND week = :week', { ltrafficid: timesheetLtrafficId, week: timesheetWeek });
     await Promise.all([adminId, admin1Id].filter(Boolean).map((id) => db.pool.query('DELETE FROM lt_refresh_tokens WHERE user_id = :id', { id })));
     await db.pool.query('DELETE FROM login_users WHERE user_id IN (:adminId, :admin1Id)', { adminId, admin1Id });
     await fs.rm(path.resolve(process.cwd(), env.UPLOADS_ROOT, 'downloads', 'policies', `${policyReference}.pdf`), { force: true });
@@ -93,5 +103,27 @@ describe('Mobile feedback API fixes', () => {
     expect(result.days).toHaveLength(7);
     expect(result.selected_days).toHaveLength(2);
     expect(result.selected_days.map((day) => day.date)).toEqual(['2026-08-03', '2026-08-05']);
+  });
+
+  test('resubmitting the same pending week updates one existing timesheet', async () => {
+    const first = await request(app).post('/api/v1/employee/timesheets/submit').set('Authorization', `Bearer ${adminToken}`).send({
+      week: timesheetWeek,
+      days: [{ date: '2026-08-03', hours: '8', location: 'Site A', activity: 'Installation', contract: 'TfL' }],
+    });
+    const second = await request(app).post('/api/v1/employee/timesheets/submit').set('Authorization', `Bearer ${adminToken}`).send({
+      week: timesheetWeek,
+      comments: 'Hours corrected',
+      days: [{ date: '2026-08-03', hours: '9', location: 'Site A', activity: 'Installation', contract: 'TfL' }],
+    });
+    const [rows] = await db.pool.query(
+      'SELECT id, hours1, comments, status FROM timesheet WHERE ltrafficid = :ltrafficid AND week = :week',
+      { ltrafficid: timesheetLtrafficId, week: timesheetWeek },
+    );
+
+    expect(first.status).toBe(201);
+    expect(first.body.data.submission_action).toBe('created');
+    expect(second.status).toBe(200);
+    expect(second.body.data).toMatchObject({ id: first.body.data.id, submission_action: 'updated' });
+    expect(rows).toEqual([expect.objectContaining({ id: first.body.data.id, hours1: '9', comments: 'Hours corrected', status: 'Submitted' })]);
   });
 });
