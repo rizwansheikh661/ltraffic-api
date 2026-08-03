@@ -19,8 +19,8 @@ const {
 const router = Router();
 const canView = authorize(LEVELS.ADMIN, LEVELS.ADMIN1);
 const canWrite = authorize(LEVELS.ADMIN, LEVELS.ADMIN1);
-const canDelete = authorize(LEVELS.ADMIN);
-const policyUpload = uploadFor('downloads/policies', { allowedMime: ['application/pdf'] });
+const canDelete = authorize(LEVELS.ADMIN, LEVELS.ADMIN1);
+const policyUpload = uploadFor('downloads/policies', { allowedMime: ['application/pdf'], maxMb: 50 });
 
 /**
  * @openapi

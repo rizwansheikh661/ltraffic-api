@@ -25,6 +25,7 @@ const ContactFields = {
   jobtitle: z.string().trim().max(255).optional(),
   linemanager: z.string().trim().max(255).optional(),
   location: z.string().trim().max(255).optional(),
+  photo_url: z.string().trim().url().max(2048).optional(),
 };
 
 const CreateSchema = z.object(ContactFields);

@@ -20,6 +20,7 @@ function formatTimesheet(row) {
     comments: row.comments,
     status: row.status,
     days,
+    selected_days: days.filter((day) => day.date),
   };
 }
 

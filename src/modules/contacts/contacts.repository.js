@@ -61,7 +61,7 @@ async function create(fields, conn = pool) {
         ltrafficemail, ltrafficphone, jobtitle, linemanager, location)
      VALUES
        (:firstname, '', :surname, '', '', '', '', '',
-        '', '', '', '', '', '', '', '', :employeeid, '',
+        '', '', '', '', '', '', '', '', :employeeid, :photo_url,
         :email, :phone, :jobtitle, :linemanager, :location)`,
     fields,
   );
@@ -78,6 +78,7 @@ async function update(id, fields, conn = pool) {
     jobtitle: 'jobtitle',
     linemanager: 'linemanager',
     location: 'location',
+    photo_url: 'photoimage',
   };
   const sets = [];
   const params = { id };

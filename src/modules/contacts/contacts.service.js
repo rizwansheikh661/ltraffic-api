@@ -26,6 +26,7 @@ async function create(fields) {
     jobtitle: fields.jobtitle || null,
     linemanager: fields.linemanager || null,
     location: fields.location || null,
+    photo_url: fields.photo_url || '',
   });
   return formatContact(await repo.findById(id));
 }
